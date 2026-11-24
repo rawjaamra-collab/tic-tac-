@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Тик-Так-Тоу</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 0;
+      padding: 30px 16px;
+      background-color: #fafafa;
+      color: #222;
+    }
+    h1 {
+      margin: 0 0 12px;
+    }
+    .controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    #status {
+      font-size: 1.15rem;
+      font-weight: bold;
+      margin: 8px 0;
+      min-height: 28px;
+    }
+    #board {
+      display: grid;
+      grid-template-columns: repeat(3, 96px);
+      grid-template-rows: repeat(3, 96px);
+      gap: 8px;
+      margin: 16px 0 20px;
+    }
+    .cell {
+      width: 96px;
+      height: 96px;
+      background-color: #fff;
+      border: 2px solid #333;
+      border-radius: 8px;
+      font-size: 2.5rem;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      user-select: none;
+      transition: background-color 0.15s;
+    }
+    .cell:hover {
+      background-color: #eef3ff;
+    }
+    button {
+      padding: 9px 16px;
+      font-size: 0.95rem;
+      border: 1px solid #333;
+      border-radius: 6px;
+      background-color: #fff;
+      cursor: pointer;
+    }
+    button.active {
+      background-color: #222;
+      color: #fff;
+    }
+    button:hover {
+      opacity: 0.9;
+    }
+  </style>
+</head>
+<body>
+  <h1>Тик-Так-Тоу</h1>
+
+  <div class="controls">
+    <button id="mode-ai" class="active">Компьютертэй (AI)</button>
+    <button id="mode-pvp">2 Тоглогч</button>
+  </div>
+
+  <div id="status">Ээлж: X</div>
+
+  <div id="board">
+    <div class="cell" data-index="0"></div>
+    <div class="cell" data-index="1"></div>
+    <div class="cell" data-index="2"></div>
+    <div class="cell" data-index="3"></div>
+    <div class="cell" data-index="4"></div>
+    <div class="cell" data-index="5"></div>
+    <div class="cell" data-index="6"></div>
+    <div class="cell" data-index="7"></div>
+    <div class="cell" data-index="8"></div>
+  </div>
+
+  <button id="reset">Дахин эхлүүлэх</button>
+
+  <script>
+    const cells = document.querySelectorAll(".cell");
+    const statusText = document.getElementById("status");
+    const resetBtn = document.getElementById("reset");
+    const modeAiBtn = document.getElementById("mode-ai");
+    const modePvpBtn = document.getElementById("mode-pvp");
+
+    let board = Array(9).fill("");
+    let currentPlayer = "X";
+    let gameActive = true;
+    let vsComputer = true;
+
+    const winConditions = [
+      [0, 1, 2], [3, 4, 5], [6, 7, 8],
+      [0, 3, 6], [1, 4, 7], [2, 5, 8],
+      [0, 4, 8], [2, 4, 6]
+    ];
+
+    function checkWinner() {
+      for (const [a, b, c] of winConditions) {
+        if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+          statusText.textContent = `Ялагч: ${board[a]}!`;
+          gameActive = false;
+          return true;
+        }
+      }
+      if (!board.includes("")) {
+        statusText.textContent = "Тэнцээ!";
+        gameActive = false;
+        return true;
+      }
+      return false;
+    }
+
+    function computerMove() {
+      if (!gameActive) return;
+
+      const emptyIndices = [];
+      for (let i = 0; i < board.length; i++) {
+        if (board[i] === "") emptyIndices.push(i);
+      }
+      if (emptyIndices.length === 0) return;
+
+      const randomIndex =
+        emptyIndices[Math.floor(Math.random() * emptyIndices.length)];
+
+      board[randomIndex] = "O";
+      cells[randomIndex].textContent = "O";
+
+      if (!checkWinner()) {
+        currentPlayer = "X";
+        statusText.textContent = "Ээлж: X";
+      }
+    }
+
+    function handleCellClick(e) {
+      const index = Number(e.target.dataset.index);
+      if (board[index] !== "" || !gameActive) return;
+      if (vsComputer && currentPlayer !== "X") return;
+
+      board[index] = currentPlayer;
+      e.target.textContent = currentPlayer;
+
+      if (checkWinner()) return;
+
+      if (vsComputer) {
+        currentPlayer = "O";
+        statusText.textContent = "Компьютер нүүж байна...";
+        setTimeout(computerMove, 300);
+      } else {
+        currentPlayer = currentPlayer === "X" ? "O" : "X";
+        statusText.textContent = `Ээлж: ${currentPlayer}`;
+      }
+    }
+
+    function resetGame() {
+      board = Array(9).fill("");
+      currentPlayer = "X";
+      gameActive = true;
+      statusText.textContent = "Ээлж: X";
+      cells.forEach(cell => (cell.textContent = ""));
+    }
+
+    function setMode(aiMode) {
+      vsComputer = aiMode;
+      modeAiBtn.classList.toggle("active", aiMode);
+      modePvpBtn.classList.toggle("active", !aiMode);
+      resetGame();
+    }
+
+    cells.forEach(cell => cell.addEventListener("click", handleCellClick));
+    resetBtn.addEventListener("click", resetGame);
+    modeAiBtn.addEventListener("click", () => setMode(true));
+    modePvpBtn.addEventListener("click", () => setMode(false));
+  </script>
+</body>
+</html>
